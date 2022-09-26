@@ -1,4 +1,4 @@
-const byte pwmPin = 9; //designated pwm pin on teensy 3.0
+const byte pwmPin = 6; //designated pwm pin on teensy 3.0
 
  
 volatile unsigned long dutyTimer = 0; // //timer on duty cycle
@@ -14,7 +14,7 @@ volatile bool newFreq = false; //flags frequency changes
 float currFreq = 0; //frequency
 float currDuty = 0; //duty cycle
 float sigErr = 1.0;
-float freqVariation = 5.0;
+float freqVariation = 2.5;
 
 String warning = "";
 
@@ -36,12 +36,16 @@ void loop() {
     PWM_freq();
     PWM_duty();
     warning = getWarning();
-  }
-  if(prevMillis + 100 < millis()){
-    Serial.printf("Freq: %f, ", currFreq, warning);
+    
+    if(prevMillis + 100 < millis()){
+    Serial.printf("Freq: %.3f, ", currFreq);
+    Serial.printf("Duty: %.3f, ", currDuty);
+    Serial.println("Message: " + warning);
     
     prevMillis= millis();
   }
+  }
+  
   if(micros() - pwmTimer > 1000000){
     newFreq = true;
   }
@@ -50,11 +54,11 @@ void loop() {
 
 
 void PWM_freq(){ // can be a static method
-  currFreq = 1000000 / cycleTimer;
+  currFreq = (1000000 / (float)(cycleTimer));
 }
 
 void PWM_duty(){ //can be a static method
-  currDuty =  dutyTimer / cycleTimer * 100;
+  currDuty =  (float) dutyTimer / cycleTimer * 100;
 }
 
 void onTrigger(){ //will be static method
@@ -83,29 +87,29 @@ void onTrigger(){ //will be static method
 
 String getWarning(){ //static method with two params
   
-  if( abs(currFreq - 10) < sigErr) { //Device Error
+  if( abs(currFreq - 10) <= sigErr) { //Device Error
     if(currDuty >= 5.0 &&  currDuty <= 95.5){
       return "Normal";
     } 
   }
-  else if( abs(currFreq - 20) < sigErr) { //Device Error
+  else if( abs(currFreq - 20) <= sigErr) { //Device Error
     if(currDuty >= 5.0 &&  currDuty <= 95.5){
       return "Undervoltage Detected";
     } 
   }
-  else if( abs(currFreq - 30) < sigErr) { //SST
+  else if( abs(currFreq - 30) <= sigErr) { //SST
     if(currDuty >= 5.0 &&  currDuty <= 10.0){
       return "good";
     } else if( currDuty >= 90.0 && currDuty <= 95.0){
       return "bad";
     }
   }
-  else if( abs(currFreq - 40) < sigErr) { //Device Error
+  else if( abs(currFreq - 40) <= sigErr) { //Device Error
     if(currDuty >= 47.5 &&  currDuty <= 52.5){
       return "Device Error";
     } 
   }
-  else if( abs(currFreq - 50) < sigErr) { //Device Error
+  else if( abs(currFreq - 50) <= sigErr) { //Device Error
     if(currDuty >= 47.5 &&  currDuty <= 52.5){
       return "Kl.31 fault";
     } 
