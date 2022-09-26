@@ -24,7 +24,9 @@ void loop() {
   rawSensorValue = analogRead(sensorPin);
   rawVoltage = rawSensorValue * (5.0 / 1023.0); //formula from arduino.cc
   sensorCurrent = (rawVoltage-2.5) / 100 * 6.667; //conversion to Amps
-  Serial.print("Raw Sensor Value:\t" + rawSensorValue); 
-  Serial.print("\tRaw Voltage: \t" + String(rawVoltage));
-  Serial.println("\tCurrent (A):\t" + String(sensorCurrent));
+  Serial.print("RSV: ");
+  Serial.print(rawSensorValue);
+  Serial.print("\tRaw Voltage: " + String(rawVoltage));
+  Serial.println("\tCurrent (A): " + String(sensorCurrent));
+  delay(10);
 }
