@@ -16,8 +16,8 @@ unsigned long prevMillis = 0;
 void loop() {
   
   if(prevMillis + 2000 < millis() && PWM_READ::hasReading){
-    Serial.println("Warning: " + PWM_READ::PWM_READER->getWarning(PWM_READ::PWM_READER->getFrequency(), PWM_READ::PWM_READER->getDuty()));
-    Serial.printf("Freq: %f, Duty: %f\n", PWM_READ::PWM_READER->getFrequency(), PWM_READ::PWM_READER->getDuty());
+    Serial.println("Warning: " + PWM_READ::getWarning(PWM_READ::getFrequency(), PWM_READ::getDuty()));
+    Serial.printf("Freq: %f, Duty: %f\n", PWM_READ::getFrequency(), PWM_READ::getDuty());
   }
  
 
