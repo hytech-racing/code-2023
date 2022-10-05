@@ -74,6 +74,7 @@ elapsedMillis can_bms_detailed_temps_timer = 4;
 elapsedMillis can_bms_voltages_timer = 6;
 elapsedMillis can_bms_temps_timer = 8;
 elapsedMillis can_bms_onboard_temps_timer = 10;
+elapsedMillis balance_cells_timer = 0;
 
 // CONSECUTIVE FAULT COUNTERS: counts successive faults; resets to zero if normal reading breaks fault chain
 unsigned long uv_fault_counter = 0;             // undervoltage fault counter
@@ -162,7 +163,7 @@ bool check_ics(int state) {
 // READ functions to collect and read data from the LTC6811-2
 // Read cell voltages from all eight LTC6811-2; voltages are read in with units of 100μV
 void read_voltages() {
-  if (check_ics(0)) {
+  if (check_ics(0) && balance_cells_timer > 2000) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
     for (int i = 0; i < 8; i++) {
       ic[i].wakeup();
@@ -263,7 +264,7 @@ void voltage_fault_check() {
 
 // Read GPIO registers from LTC6811-2; Process temperature and humidity data from relevant GPIO registers
 void read_gpio() {
-  if (check_ics(2)) {
+  if (check_ics(2) && balance_cells_timer > 2000) {
     Reg_Group_Config configuration = Reg_Group_Config((uint8_t) 0x1F, false, false, vuv, vov, (uint16_t) 0x0, (uint8_t) 0x1); // base configuration for the configuration register group
     for (int i = 0; i < 8; i++) {
       ic[i].wakeup();
@@ -365,6 +366,7 @@ void balance_cells() {
       return;
     }
     Serial.print("Balancing voltage: "); Serial.println(min_voltage / 10000.0, 4);
+    balance_cells_timer = 0;
     for (uint16_t i = 0; i < 8; i++) {
       uint16_t cell_balance_setting = 0x0;
       // determine which cells of the IC need balancing
@@ -397,7 +399,6 @@ void balance_cells() {
       ic[i].wakeup();
       ic[i].wrcfga(configuration);
     }
-    delay(2000);
   }
 }
 
