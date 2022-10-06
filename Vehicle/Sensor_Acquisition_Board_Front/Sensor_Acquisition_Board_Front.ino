@@ -57,7 +57,8 @@ void swap_bytes(uint8_t *low_byte, uint8_t high_byte);
 #define VEHICLE_LED 6
 
 // Options
-#define DEBUG (false)
+#define DEBUG (true)
+#define IMU_DEBUG (false)
 #define ZERO_IMU (false)
 
 void setup() {
@@ -137,11 +138,12 @@ void loop() {
     digitalWrite(VEHICLE_LED, !digitalRead(VEHICLE_LED)); // Invert LED status to simulate flashing
     digitalWrite(IMU_LED, !digitalRead(IMU_LED));         // Invert LED status to simulate flashing
     
-    #if DEBUG
+    #if IMU_DEBUG
+    
     // accelerometer
-    int16_t lat_accel = ((int16_t)(msg.buf[0]) << 8) | msg.buf[1];
-    int16_t long_accel = ((int16_t)(msg.buf[2]) << 8) | msg.buf[3];
-    int16_t vert_accel = ((int16_t)(msg.buf[4]) << 8) | msg.buf[5];
+    int16_t lat_accel = ((int16_t)(imu_accel_msg.buf[0]) << 8) | imu_accel_msg.buf[1];
+    int16_t long_accel = ((int16_t)(imu_accel_msg.buf[2]) << 8) | imu_accel_msg.buf[3];
+    int16_t vert_accel = ((int16_t)(imu_accel_msg.buf[4]) << 8) | imu_accel_msg.buf[5];
     
     Serial.println("-----------------------------");
     Serial.print("Lateral:\t");
@@ -154,9 +156,9 @@ void loop() {
 
     // gyroscope
     // multiply by 360 to get degrees
-    int16_t yaw = (((int16_t)(msg.buf[0]) << 8) | msg.buf[1]) * 360;
-    int16_t pitch = (((int16_t)(msg.buf[2]) << 8) | msg.buf[3]) * 360;
-    int16_t roll = (((int16_t)(msg.buf[4]) << 8) | msg.buf[5]) * 360;
+    int16_t yaw = (((int16_t)(imu_gyro_msg.buf[0]) << 8) | imu_gyro_msg.buf[1]) * 360;
+    int16_t pitch = (((int16_t)(imu_gyro_msg.buf[2]) << 8) | imu_gyro_msg.buf[3]) * 360;
+    int16_t roll = (((int16_t)(imu_gyro_msg.buf[4]) << 8) | imu_gyro_msg.buf[5]) * 360;
 
     Serial.println("-----------------------------");
     Serial.print("Yaw:\t");
@@ -166,6 +168,7 @@ void loop() {
     Serial.print("Roll:\t");
     Serial.println(roll / 1000.);
     Serial.println();
+    
     #endif
 
     // Fix endianness
