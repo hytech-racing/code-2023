@@ -22,6 +22,12 @@
 #include "Metro.h"
 #include "FlexCAN_T4.h"
 
+// Options
+#define DEBUG (true)
+#define IMU_DEBUG (false)
+#define SAMPLE_TIME (200)
+#define ZERO_IMU (false)
+
 // CAN Variables
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> CAN_IMU;      //Pins to IMU are A8 and A9 (22 and 23), which is CAN1
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN_Vehicle;  //Pins to the Vehicle CanBus are D0 and D1 (0 and 1), which is CAN2
@@ -46,7 +52,7 @@ float filtered_sensor1_reading{};
 float filtered_sensor2_reading{};
 
 // Timers
-Metro timer_SAB_front = Metro(200);
+Metro timer_SAB_front = Metro(SAMPLE_TIME);
 Metro timer_IMU = Metro(5);
 // Metro timer_adafruit_gps = Metro(200);
 
@@ -55,11 +61,6 @@ void swap_bytes(uint8_t *low_byte, uint8_t high_byte);
 // Initialize LEDs
 #define IMU_LED 5
 #define VEHICLE_LED 6
-
-// Options
-#define DEBUG (true)
-#define IMU_DEBUG (false)
-#define ZERO_IMU (false)
 
 void setup() {
   // Initialize both sets of CAN lines

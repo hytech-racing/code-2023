@@ -18,9 +18,13 @@
 #include "CAN_ID.h"
 #include "Metro.h"
 
+// Options
+#define DEBUG (true)
+#define SAMPLE_TIME (5)
+
 // CAN Variables
 FlexCAN CAN(500000);
-Metro timer_rear_update = Metro(5);
+Metro timer_rear_update = Metro(SAMPLE_TIME);
 CAN_message_t msg;
 
 // Initialize LEDs
@@ -39,9 +43,6 @@ inline float get_sensor2_value() {return 0.0;}   // Ambient Air Temperature sens
 // inline float get_sensor2_value() {return (analogRead(SENSOR_2_CHANNEL) * -0.43003 + 190.95588) * 1000;} // DO NOT CHANGE THIS W/O SPECIAL REASON
 inline float get_sensor3_value() {return (analogRead(SENSOR_3_CHANNEL) * 0.059312 + 3.0) * 1000;}       // DO NOT CHANGE THIS W/O SPECIAL REASON
 inline float get_sensor4_value() {return (analogRead(SENSOR_4_CHANNEL) * 0.059312 + 3.0) * 1000;}       // DO NOT CHANGE THIS W/O SPECIAL REASON
-
-// Options
-#define DEBUG (true)
 
 SAB_readings_rear sab_readings_rear;
 
