@@ -74,7 +74,7 @@ elapsedMillis can_bms_detailed_temps_timer = 4;
 elapsedMillis can_bms_voltages_timer = 6;
 elapsedMillis can_bms_temps_timer = 8;
 elapsedMillis can_bms_onboard_temps_timer = 10;
-elapsedMillis balance_cells_timer = 0;
+elapsedMillis balance_cells_timer = 2000;
 
 // CONSECUTIVE FAULT COUNTERS: counts successive faults; resets to zero if normal reading breaks fault chain
 unsigned long uv_fault_counter = 0;             // undervoltage fault counter
