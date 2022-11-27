@@ -51,9 +51,8 @@ SAB_readings_gps sabGPS;
 SAB_readings_rear sabRear;
 
 
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> CAN_bus;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN_bus;
 CAN_message_t msg; //
-CAN_message_t imu_msg; // For incoming IMU CAN message
 unsigned char len = 0;
 unsigned char buf[8];
 
