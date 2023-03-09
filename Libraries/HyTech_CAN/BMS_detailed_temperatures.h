@@ -8,7 +8,11 @@
 #pragma pack(push,1)
 
 // @Parseclass @Prefix(IC_{get_ic_id()}) @Indexable(get_ic_id(8))
-class BMS_detailed_temperatures {
+class BMS_detailed_temperatures 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     BMS_detailed_temperatures() = default;
     BMS_detailed_temperatures(uint8_t buf[]) { load(buf); }
@@ -20,8 +24,14 @@ public:
         set_temperature_2(temperature_2);
     }
 
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_BMS_DETAILED_TEMPERATURES; }
+    #else
     inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     inline uint8_t get_ic_id()         const  { return group_id_ic_id & 0xF; }
     inline uint8_t get_group_id()      const  { return group_id_ic_id >> 4;}

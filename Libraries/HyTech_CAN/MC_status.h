@@ -7,13 +7,23 @@
 
 #pragma pack(push,1)
 
-class MC_status{
+class MC_status
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
   MC_status() = default;
   MC_status(uint8_t buf[]) { load(buf); }
 
+  #ifdef INHERITANCE_EN
+  inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+  inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+  virtual inline int get_id()      const override { return ID_MC1_STATUS; }
+  #else
   inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
   inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
+  #endif
 
   inline uint16_t get_status_word()   const { return status_word; }
   inline int16_t get_speed()       const { return speed; }

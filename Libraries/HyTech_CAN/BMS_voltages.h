@@ -8,7 +8,11 @@
 #pragma pack(push,1)
 
 // @Parseclass @Prefix(BMS_voltage)
-class BMS_voltages {
+class BMS_voltages 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     BMS_voltages() = default;
     BMS_voltages(uint8_t buf[]) { load(buf); }
@@ -19,8 +23,14 @@ public:
         set_total(total_voltage);
     }
 
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_BMS_VOLTAGES; }
+    #else
     inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     inline uint16_t get_average()   const { return average_voltage; }
     inline uint16_t get_low()       const { return low_voltage; }

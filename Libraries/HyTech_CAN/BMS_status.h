@@ -8,13 +8,23 @@
 #pragma pack(push,1)
 
 // @Parseclass @Prefix(BMS)
-class BMS_status {
+class BMS_status 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     BMS_status() = default;
     BMS_status(uint8_t buf[]) { load(buf); }
-
+    
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_BMS_STATUS; }
+    #else
     inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     inline uint8_t get_state()                   const { return state; }
     inline uint16_t get_error_flags()            const { return error_flags; }

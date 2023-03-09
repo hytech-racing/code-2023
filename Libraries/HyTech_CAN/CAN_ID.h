@@ -1,3 +1,5 @@
+#pragma once
+
 #define ID_MC1_STATUS												0xA0
 #define ID_MC2_STATUS												0xA1
 #define ID_MC3_STATUS												0xA2
@@ -24,7 +26,7 @@
 
 #define ID_MCU_STATUS												0xC3
 #define ID_MCU_PEDAL_READINGS										0xC4
-#define ID_MCU_LOAD_CELLS                           0xC5
+#define ID_MCU_LOAD_CELLS                                           0xC5
 #define ID_MCU_ANALOG_READINGS										0xCC
 
 

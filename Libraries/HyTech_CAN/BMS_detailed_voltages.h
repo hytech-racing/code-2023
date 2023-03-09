@@ -8,7 +8,11 @@
 #pragma pack(push,1)
 
 // @Parseclass @Prefix(IC_{get_ic_id()}) @Custom(parse_detailed_voltages) @Indexable(get_ic_id(8), get_group_id(3))
-class BMS_detailed_voltages {
+class BMS_detailed_voltages 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     BMS_detailed_voltages() = default;
     BMS_detailed_voltages(uint8_t buf[]) { load(buf); }
@@ -20,8 +24,14 @@ public:
         set_voltage_2(voltage_2);        
     }
 
-    inline void load(uint8_t buf[])   { memcpy(this, buf, sizeof(*this)); }
-    inline void write(uint8_t buf[])  { memcpy(buf, this, sizeof(*this)); }
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_BMS_DETAILED_VOLTAGES; }
+    #else
+    inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
+    inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     inline uint8_t get_ic_id()      const { return ic_id_group_id & 0xF; }
     inline uint8_t get_group_id()   const { return ic_id_group_id >> 4; }

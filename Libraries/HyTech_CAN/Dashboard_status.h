@@ -6,13 +6,23 @@
 #pragma pack(push,1)
 
 // @Parseclass @Custom(parse_dashboard_leds)
-class Dashboard_status {
+class Dashboard_status 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     Dashboard_status() = default;
     Dashboard_status(const uint8_t buf[8]) { load(buf); }
 
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_DASHBOARD_STATUS; }
+    #else
     inline void load(const uint8_t buf[8])  { memcpy(this,buf,sizeof(*this)); }
     inline void write(uint8_t buf[8]) const { memcpy(buf,this,sizeof(*this)); }
+    #endif
 
     /* Dashboard status */
 

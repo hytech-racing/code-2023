@@ -8,13 +8,23 @@
 #pragma pack(push,1)
 
 // @Parseclass
-class Charger_configure {
+class Charger_configure 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     Charger_configure() = default;
     Charger_configure(uint8_t buf[]) { load(buf); }
 
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_CHARGER_CONTROL; } // Is that the correct one?
+    #else
     inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[])        { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     inline uint8_t get_control()      { return control; }
     inline void set_control(uint8_t con) { this->control = con; }

@@ -5,14 +5,24 @@
 #pragma pack(push,1)
 
 // @Parseclass
-class SAB_readings_rear {
+class SAB_readings_rear 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     SAB_readings_rear() = default;
 
     SAB_readings_rear(const uint8_t buf[8]) { load(buf); }
 
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_SAB_READINGS_REAR; }
+    #else
     inline void load(const uint8_t buf[8]) { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[8]) const { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     // Getters
     inline uint16_t get_sensor_1() const { return sensor_1; }

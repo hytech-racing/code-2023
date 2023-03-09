@@ -8,13 +8,23 @@
 #pragma pack(push,1)
 
 // @Parseclass
-class EM_measurement {
+class EM_measurement 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     EM_measurement() = default;
     EM_measurement(uint8_t buf[]) { load(buf); }
 
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_EM_MEASUREMENT; }
+    #else
     inline void load(uint8_t buf[])           { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[])    const { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     // Big endian byte ordering
     inline void load_from_emeter(uint8_t buf[]) {

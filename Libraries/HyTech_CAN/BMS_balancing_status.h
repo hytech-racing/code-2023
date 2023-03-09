@@ -14,10 +14,18 @@
     #include "Arduino.h"
 #endif
 
+#ifdef INHERITANCE_EN
+#include "CAN_ID.h"
+#endif
+
 #pragma pack(push,1)
 
 // @Parseclass @Custom(parse_bms_balancing_status);
-class BMS_balancing_status {
+class BMS_balancing_status 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     BMS_balancing_status() = default;
     BMS_balancing_status(uint8_t buf[]) { load(buf); }
@@ -26,8 +34,14 @@ public:
         set_balancing(balancing_status);
     }
 
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_BMS_BALANCING_STATUS; }
+    #else
     inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     inline uint8_t get_group_id()                                   const { return message & 0xF; }
     inline uint64_t get_balancing()                                 const { return message >> 0x4; }

@@ -9,7 +9,11 @@
 #pragma pack(push,1)
 
 // @Parseclass @Prefix(BMS)
-class BMS_coulomb_counts {
+class BMS_coulomb_counts 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     BMS_coulomb_counts() = default;
     BMS_coulomb_counts(uint8_t buf[]) { load(buf); }
@@ -17,9 +21,14 @@ public:
         set_total_charge(total_charge);
         set_total_discharge(total_discharge);
     }
-
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_BMS_COULOMB_COUNTS; }
+    #else
     inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     inline uint32_t get_total_charge()      const { return total_charge; }
     inline uint32_t get_total_discharge()   const { return total_discharge; }

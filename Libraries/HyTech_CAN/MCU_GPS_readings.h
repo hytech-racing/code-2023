@@ -8,13 +8,23 @@
 #pragma pack(push,1)
 
 // @Parseclass
-class MCU_GPS_readings {
+class MCU_GPS_readings 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
     MCU_GPS_readings() = default;
     MCU_GPS_readings(uint8_t buf[8]) { load(buf); }
 
+    #ifdef INHERITANCE_EN
+    inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+    inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+    virtual inline int get_id()      const override { return ID_MCU_GPS_READINGS; }
+    #else
     inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
     inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
+    #endif
 
     inline int32_t get_latitude()   const { return latitude; }
     inline int32_t get_longitude()  const { return longitude; }

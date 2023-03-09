@@ -7,14 +7,24 @@
 
 #pragma pack(push,1)
 
-class MC_setpoints_command{
+class MC_setpoints_command 
+#ifdef INHERITANCE_EN
+: public CAN_message
+#endif
+{
 public:
   MC_setpoints_command() = default;
   MC_setpoints_command(uint8_t buf[]) { load(buf); }
 
+  #ifdef INHERITANCE_EN
+  inline void load(uint8_t buf[])        override { memcpy(this+sizeof(CAN_message), buf, sizeof(*this)-sizeof(CAN_message)); }
+  inline void write(uint8_t buf[]) const override { memcpy(buf, this+sizeof(CAN_message), sizeof(*this)-sizeof(CAN_message)); }
+  virtual inline int get_id()      const override { return ID_MC1_SETPOINTS_COMMAND; }
+  #else
   inline void load(uint8_t buf[])         { memcpy(this, buf, sizeof(*this)); }
   inline void write(uint8_t buf[])  const { memcpy(buf, this, sizeof(*this)); }
-
+  #endif
+   
   inline uint16_t get_control_word()   const { return control_word; }
   inline bool get_inverter_enable()   const{ return control_word & 0x100; }
   inline bool get_hv_enable()   const{ return control_word & 0x200; }
@@ -33,7 +43,7 @@ public:
   inline void set_pos_torque_limit(const int16_t plimit)   { pos_torque_limit = plimit; }
   inline void set_neg_torque_limit(const int16_t nlimit)   { neg_torque_limit = nlimit;}
 
-private:
+  private:
     uint16_t control_word;
     int16_t speed_setpoint; //in rpm
     int16_t pos_torque_limit; //in 0.1% Mn
