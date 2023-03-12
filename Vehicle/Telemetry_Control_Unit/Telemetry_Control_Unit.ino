@@ -249,6 +249,7 @@ void loop() {
 }
 
 //TODO: Condense with polymorphism
+//Could create some other method to select the object to parse with, so that the logic to select CAN message objects is simplified and centralized.
 void parse_can_message() {
     while (CAN.read(msg_rx)) {
         write_to_SD(&msg_rx); // Write to SD card buffer (if the buffer fills up, triggering a flush to disk, this will take 8ms)
@@ -446,6 +447,7 @@ int write_xbee_data() {
 }
 
 //TODO: Condense with polymorphism
+//Im thinking that you could make an array of timers and iterate through them to check them instead
 void send_xbee() {
     if (timer_debug_bms_voltages.check()) {
         bms_voltages.write(xb_msg.buf);
