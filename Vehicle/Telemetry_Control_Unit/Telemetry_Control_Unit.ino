@@ -247,6 +247,8 @@ void loop() {
     }
   #endif
 }
+
+//TODO: Condense with polymorphism
 void parse_can_message() {
     while (CAN.read(msg_rx)) {
         write_to_SD(&msg_rx); // Write to SD card buffer (if the buffer fills up, triggering a flush to disk, this will take 8ms)
@@ -442,6 +444,8 @@ int write_xbee_data() {
     memset(xb_buf, 0, sizeof(CAN_message_t));
     return written;
 }
+
+//TODO: Condense with polymorphism
 void send_xbee() {
     if (timer_debug_bms_voltages.check()) {
         bms_voltages.write(xb_msg.buf);
