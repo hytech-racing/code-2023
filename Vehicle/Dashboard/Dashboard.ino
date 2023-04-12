@@ -31,7 +31,15 @@ DebouncedButton btn_led_dimmer;
 DialVectoring dial_torque_vectoring;
 
 // CAN Variables
+<<<<<<< Updated upstream
 Metro timer_can_update = Metro(100);
+=======
+Metro timer_can_update = Metro(1000);
+Metro timer_can_read = Metro(100);
+Metro timer_torque_blink = Metro(0);
+Metro timer_drive_blink = Metro(0);
+
+>>>>>>> Stashed changes
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> CAN;
 CAN_message_t msg;
 
@@ -104,12 +112,70 @@ void loop() {
 
     static bool should_send = false;
 
+<<<<<<< Updated upstream
     if (timer_mcu_heartbeat.check()){
         timer_mcu_heartbeat.interval(0);
         should_send = false;
     }
     else {
         should_send = true;
+=======
+  if (timer_mcu_heartbeat.check()) {
+    timer_mcu_heartbeat.interval(0);
+    should_send = false;
+  }
+  else {
+    should_send = true;
+  }
+
+  
+  prev_buttons = curr_buttons;
+  curr_buttons = dashboard_status.get_button_flags();
+  temp_buttons = curr_buttons & (curr_buttons ^ prev_buttons);
+
+  
+
+
+  // Send CAN message
+  // Timer to ensure dashboard isn't flooding data bus, also fires after a button is pressed
+  // How does the check for button press work
+  // the xor against previous buttons removes the button flags that were sent previously
+  // the and enforces that only buttons that are currently pressed are allowed to be sent
+      if(should_send &&
+          (timer_can_update.check() || (temp_buttons) || (prev_start_state != dashboard_status.get_start_btn()))
+        ){
+//  if (timer_can_update.check()) {
+
+    msg.id = ID_DASHBOARD_STATUS;
+    dashboard_status.set_button_flags(temp_buttons);
+//    Serial.println(temp_buttons, BIN);
+    msg.len = sizeof(dashboard_status);
+    dashboard_status.write(msg.buf);
+    CAN.write(msg);
+    //rest update timer
+    timer_can_update.reset();
+  }
+  // clear buttons so they can be retoggled on in the loop
+  dashboard_status.set_button_flags(0);
+  prev_start_state = dashboard_status.get_start_btn();
+}
+
+inline void neo_pixel_init() {
+
+  dashboard_neopixels.begin();
+  dashboard_neopixels.setBrightness(curr_brightness);
+  for (int i = 0; i < NEOPIXEL_COUNT - 1; i++) {
+    
+    dashboard_neopixels.setPixelColor(i, LED_INIT);
+    if (i == GEN_PURP) {
+      dashboard_neopixels.setPixelColor(i, LED_OFF);
+    }
+    if (i == RDY_DRIVE) {
+      dashboard_neopixels.setPixelColor(i, LED_BLUE);
+    }
+    if (i == TORQUE_MODE) {
+      dashboard_neopixels.setPixelColor(i, LED_WHITE);
+>>>>>>> Stashed changes
     }
 
     static uint8_t prev_buttons{}, curr_buttons{}, temp_buttons{};
@@ -136,9 +202,63 @@ void loop() {
         //rest update timer
         timer_can_update.reset();
     }
+<<<<<<< Updated upstream
     // clear buttons so they can be retoggled on in the loop
     dashboard_status.set_button_flags(0);
     prev_start_state = dashboard_status.get_start_btn();
+=======
+    prev_led_dimmer_state = 1;
+    
+    
+  }else {
+    prev_led_dimmer_state = 0;
+  }
+
+//
+  if (toggle_led_dimmer) {
+    curr_brightness = LOW_BRIGHTNESS;
+  } else curr_brightness = OUTSIDE_BRIGHTNESS;
+
+
+//    if (brightness != prevBrightness)
+dashboard_neopixels.setBrightness(curr_brightness);
+
+shutdown_signals_read();
+torque_blink();
+drive_blink();
+dashboard_neopixels.show();
+// checks display list for first available flag
+
+// if no flags set, display turns off (writes 10th entry; sets all IO exp pins high)
+for (int i = 0; i < 11; i++) {
+  if (display_list[i] == 1) {
+    expander.digitalWrite(number_encodings[i]);
+    break;
+  }
+}
+>>>>>>> Stashed changes
+}
+inline void torque_blink() {
+
+  if (timer_torque_blink.check() && dashboard_status.get_mode_led() != 4 || dashboard_status.get_mode_led() != 0) {
+      if (dashboard_neopixels.getPixelColor(LED_LIST::TORQUE_MODE) == LED_OFF) {
+          dashboard_neopixels.setPixelColor(LED_LIST::TORQUE_MODE, LED_WHITE);
+      } else {
+        dashboard_neopixels.setPixelColor(LED_LIST::TORQUE_MODE, LED_OFF);
+      }
+      
+  }
+  
+}
+inline void drive_blink() {
+  if (timer_drive_blink.check() &&  dashboard_status.get_start_led() != 4 || dashboard_status.get_start_led() != 0) {
+    if (dashboard_neopixels.getPixelColor(LED_LIST::TORQUE_MODE) == LED_OFF) {
+          dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_BLUE);
+      } else {
+        dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_OFF);
+      }
+      
+  }
 }
 
 inline void neopixel_update(){
@@ -299,10 +419,186 @@ inline void mcu_status_received(){
 
     //Critical Charge LED
 
+<<<<<<< Updated upstream
     switch(mcu_status.get_pack_charge_critical()){
       case 1: // GREEN, OK
         dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_ON_GREEN); 
         dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::ON));
+=======
+  }
+  // else if (init_imd){
+  //     led_imd.setMode(LED_MODES::OFF);
+  //     dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::OFF));
+  //     init_imd = false;
+  // }
+  else if (dashboard_neopixels.getPixelColor(LED_LIST::IMD) != LED_OFF) {
+
+    dashboard_neopixels.setPixelColor(LED_LIST::IMD, LED_RED);
+    dashboard_status.set_imd_led(static_cast<uint8_t>(LED_MODES::RED));
+    display_list[3] = 0;
+  }
+
+  //Start LED
+  switch (mcu_status.get_state()) {
+    case MCU_STATE::STARTUP:
+      
+      dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_OFF);
+      dashboard_status.set_start_led((BLINK_MODES::OFF));
+      timer_drive_blink.interval(BLINK_RATES[BLINK_MODES::OFF]);
+      timer_drive_blink.reset();
+      break;
+    case MCU_STATE::TRACTIVE_SYSTEM_NOT_ACTIVE:
+      
+      timer_drive_blink.interval(BLINK_RATES[BLINK_MODES::FAST]);
+      timer_drive_blink.reset();
+      
+      dashboard_status.set_start_led((BLINK_MODES::SLOW));
+      break;
+    case MCU_STATE::TRACTIVE_SYSTEM_ACTIVE:
+
+      timer_drive_blink.interval(BLINK_RATES[BLINK_MODES::FAST]);
+      timer_drive_blink.reset();
+      dashboard_status.set_start_led((BLINK_MODES::FAST));
+      break;
+    case MCU_STATE::ENABLING_INVERTER:
+    case MCU_STATE::WAITING_READY_TO_DRIVE_SOUND:
+    case MCU_STATE::READY_TO_DRIVE:
+      dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_BLUE);
+      timer_drive_blink.interval(BLINK_RATES[BLINK_MODES::ON]);
+      timer_drive_blink.reset();
+      dashboard_status.set_start_led((BLINK_MODES::ON));
+      break;
+    default:
+
+     
+      dashboard_neopixels.setPixelColor(LED_LIST::RDY_DRIVE, LED_OFF);
+      dashboard_status.set_start_led((BLINK_MODES::OFF));
+       timer_drive_blink.interval(BLINK_RATES[BLINK_MODES::OFF]);
+      timer_drive_blink.reset();
+      break;
+  }
+
+  //Critical Charge LED
+
+  switch (mcu_status.get_pack_charge_critical()) {
+    case 1: // GREEN, OK
+      
+      dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_ON_GREEN);
+      dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::ON));
+      break;
+    case 2: // YELLOW, WARNING 
+     
+      dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_YELLOW);
+      dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::YELLOW));
+      break;
+    case 3: // RED, CRITICAL
+      dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_RED);
+      dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::RED));
+      break;
+    default:
+      dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_OFF);
+      dashboard_status.set_crit_charge_led(static_cast<uint8_t>(LED_MODES::OFF));
+      break;
+  }
+
+  // Mode LED
+  switch (mcu_status.get_torque_mode()) {
+    case 1:
+
+      
+      dashboard_status.set_mode_led((BLINK_MODES::SLOW));
+      timer_torque_blink.interval(BLINK_RATES[BLINK_MODES::SLOW]);
+      timer_torque_blink.reset();
+      
+
+      break;
+    case 2:
+      
+      dashboard_status.set_mode_led((BLINK_MODES::FAST));
+      timer_torque_blink.interval(BLINK_RATES[BLINK_MODES::FAST]);
+      timer_torque_blink.reset();
+      break;
+    case 3:
+      
+      dashboard_neopixels.setPixelColor(LED_LIST::TORQUE_MODE, LED_WHITE);
+      dashboard_status.set_mode_led((BLINK_MODES::ON));
+      timer_torque_blink.interval(BLINK_RATES[BLINK_MODES::ON]);
+      timer_torque_blink.reset();
+      break;
+    default:
+      //led_mode.setMode(LED_MODES::OFF);
+      
+      dashboard_neopixels.setPixelColor(LED_LIST::TORQUE_MODE, LED_OFF);
+      dashboard_status.set_mode_led((BLINK_MODES::OFF));
+      timer_torque_blink.interval(BLINK_RATES[BLINK_MODES::OFF]);
+      timer_torque_blink.reset();
+      break;
+  }
+
+  //Mechanical Braking LED
+  if (!mcu_status.get_mech_brake_active()) {
+    dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_OFF);
+    dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::OFF));
+
+  } else {
+    dashboard_neopixels.setPixelColor(LED_LIST::BRAKE_ENGAGE, LED_ON_GREEN);
+    dashboard_status.set_mech_brake_led(static_cast<uint8_t>(LED_MODES::ON));
+
+
+  }
+
+  if (!mcu_status.get_launch_ctrl_active()) {
+    dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_OFF);
+    dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::OFF));
+  } else {
+    dashboard_neopixels.setPixelColor(LED_LIST::LAUNCH_CTRL, LED_ON_GREEN);
+    dashboard_status.set_launch_control_led(static_cast<uint8_t>(LED_MODES::ON));
+  }
+}
+
+//inline void mc_fault_codes_received(){
+//    bool is_mc_err = false;
+//
+//    if (mc_fault_codes.get_post_fault_hi() ||
+//        mc_fault_codes.get_post_fault_lo() ||
+//        mc_fault_codes.get_run_fault_hi() ||
+//        mc_fault_codes.get_run_fault_lo())
+//    {
+//        is_mc_err = true;
+//    }
+//    //MC Error LED
+//
+//    if (is_mc_err){
+//        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_RED);
+//        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
+//        display_list[2] = 1;
+//        timer_led_mc_err.reset();
+//    // display fault for 1 second and then it clears
+//    } else if (dashboard_neopixels.getPixelColor(LED_LIST::MC_ERR) != LED_OFF && timer_led_mc_err.check()){
+//        dashboard_neopixels.setPixelColor(LED_LIST::MC_ERR, LED_OFF);
+//        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::OFF));
+//        display_list[2] = 0;
+//    }
+//
+//    /*if (is_mc_err){
+//        led_mc_err.setMode(LED_MODES::ON);
+//        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::ON));
+//        timer_led_mc_err.reset();
+//    }
+//    else if (led_mc_err.getMode() != LED_MODES::OFF && timer_led_mc_err.check()){
+//        led_mc_err.setMode(LED_MODES::SLOW);
+//        dashboard_status.set_mc_error_led(static_cast<uint8_t>(LED_MODES::SLOW));
+//    }*/
+//}
+void read_can(const CAN_message_t &msg) {
+    switch (msg.id) {
+      case ID_MCU_STATUS:
+//        Serial.println("mcu status received");
+        mcu_status.load(msg.buf);
+        timer_mcu_heartbeat.reset();
+        timer_mcu_heartbeat.interval(MCU_HEARTBEAT_TIMEOUT);
+        mcu_status_received();
+>>>>>>> Stashed changes
         break;
       case 2: // YELLOW, WARNING
         dashboard_neopixels.setPixelColor(LED_LIST::CRIT_CHARGE, LED_YELLOW); 
