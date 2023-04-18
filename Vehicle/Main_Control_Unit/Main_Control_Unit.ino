@@ -88,7 +88,7 @@ Metro timer_watchdog_timer = Metro(10);
 
 elapsedMillis pedal_implausability_duration;
 
-Metro timer_debug = Metro(200);
+Metro timer_debug = Metro(1000);
 Metro timer_debug2 = Metro(1000);
 
 // this abuses Metro timer functionality to stay faulting once a fault has occurred
@@ -227,13 +227,13 @@ void loop() {
 
 
   if (timer_debug.check()) {
-    Serial.println("ERROR");
-    Serial.println(check_all_inverters_error());
-    Serial.println(mc_energy[0].get_dc_bus_voltage());
-    Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
-    Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
-    Serial.println(mcu_pedal_readings.get_brake_pedal_1());
-    Serial.println(mcu_pedal_readings.get_brake_pedal_2());
+//    Serial.println("ERROR");
+//    Serial.println(check_all_inverters_error());
+//    Serial.println(mc_energy[0].get_dc_bus_voltage());
+//    Serial.println(mcu_pedal_readings.get_accelerator_pedal_1());
+//    Serial.println(mcu_pedal_readings.get_accelerator_pedal_2());
+//    Serial.println(mcu_pedal_readings.get_brake_pedal_1());
+//    Serial.println(mcu_pedal_readings.get_brake_pedal_2());
     Serial.println();
     Serial.println("LOAD CELLS");
     Serial.println(mcu_load_cells.get_FL_load_cell());
@@ -241,17 +241,17 @@ void loop() {
     Serial.println(mcu_load_cells.get_RL_load_cell());
     Serial.println(mcu_load_cells.get_RR_load_cell());
 
-    Serial.println("MOTOR TEMPS");
-    Serial.println(mc_temps[0].get_motor_temp());
-    Serial.println(mc_temps[1].get_motor_temp());
-    Serial.println(mc_temps[2].get_motor_temp());
-    Serial.println(mc_temps[3].get_motor_temp());
-    Serial.println(mc_temps[3].get_igbt_temp());
-    Serial.println("IMU");
-    Serial.println(imu_accelerometer.get_vert_accel());
-    Serial.println(imu_gyroscope.get_yaw());
-    Serial.println("STEERING");
-    Serial.println(mcu_analog_readings.get_steering_2());
+//    Serial.println("MOTOR TEMPS");
+//    Serial.println(mc_temps[0].get_motor_temp());
+//    Serial.println(mc_temps[1].get_motor_temp());
+//    Serial.println(mc_temps[2].get_motor_temp());
+//    Serial.println(mc_temps[3].get_motor_temp());
+//    Serial.println(mc_temps[3].get_igbt_temp());
+//    Serial.println("IMU");
+//    Serial.println(imu_accelerometer.get_vert_accel());
+//    Serial.println(imu_gyroscope.get_yaw());
+//    Serial.println("STEERING");
+//    Serial.println(mcu_analog_readings.get_steering_2());
   }
 
 }
