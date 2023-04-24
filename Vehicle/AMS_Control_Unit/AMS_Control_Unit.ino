@@ -1,10 +1,10 @@
 /* ACU CONTROL UNIT CODE
-   The AMS Control Unit code is used to control and communicate with Analog Devices LTC6811-2 battery stack monitors, per the HyTech Racing HT06 Accumulator Design.
+   The AMS Control Unit code is used to control and communicate with Analog Devices LTC6811-2 battery stack monitors, per the HyTech Racing HT06-HT07 Accumulator Design.
    It also handles CAN communications with the mainECU and energy meter and drives a watchdog timer on the ACU.
    See LTC6811_2.cpp and LTC6811-2 Datasheet provided by Analog Devices for more details.
-   Author: Zekun Li, Liwei Sun
-   Version: 1.05
-   Since: 05/29/2022
+   Authors: Zekun Li, Liwei Sun
+   Version: 1.10
+   Since: 04/23/2023
 */
 
 
@@ -19,6 +19,8 @@
 #define TOTAL_IC 12                 // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
+#define CHIP_SELECT_GROUP_ONE 10   // Chip select for first LTC6820 corresponding to first group of cells 
+#define CHIP_SELECT_GROUP_TWO 11  // Chip select for second LTC6820 corresponding to second group of cells 
 #define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC
 #define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN
 #define MIN_VOLTAGE 30000          // Minimum allowable single cell voltage in units of 100μV
@@ -132,6 +134,11 @@ void setup() {
   // add 12 (TOTAL_IC) instances of LTC6811_2 to the object array, each addressed appropriately
   for (int i = 0; i < TOTAL_IC; i++) {
     ic[i] = LTC6811_2(i);
+    if (i < TOTAL_IC / 2) {
+      ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_ONE);
+    } else {
+      ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_TWO);
+    }
   }
   bms_status.set_state(BMS_STATE_DISCHARGING);
   parse_CAN_CCU_status();
