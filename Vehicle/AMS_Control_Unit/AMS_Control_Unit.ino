@@ -20,7 +20,7 @@
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
 #define CHIP_SELECT_GROUP_ONE 10   // Chip select for first LTC6820 corresponding to first group of cells 
-#define CHIP_SELECT_GROUP_TWO 11  // Chip select for second LTC6820 corresponding to second group of cells 
+#define CHIP_SELECT_GROUP_TWO 9  // Chip select for second LTC6820 corresponding to second group of cells 
 #define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC
 #define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN
 #define MIN_VOLTAGE 30000          // Minimum allowable single cell voltage in units of 100μV
