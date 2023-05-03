@@ -115,7 +115,14 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(6, OUTPUT);
   pinMode(5, OUTPUT);
+  
+  
+  
   digitalWrite(6, HIGH); //write Teensy_OK pin high
+
+  //chip select defines
+  pinMode(CHIP_SELECT_GROUP_ONE, OUTPUT); 
+  pinMode(CHIP_SELECT_GROUP_TWO, OUTPUT); 
   pulse_timer.begin(ams_ok_pulse, 50000); //timer to pulse pin 5 every 50 milliseconds
   Serial.begin(115200);
   SPI.begin();
@@ -134,10 +141,18 @@ void setup() {
   // add 12 (TOTAL_IC) instances of LTC6811_2 to the object array, each addressed appropriately
   for (int i = 0; i < TOTAL_IC; i++) {
     ic[i] = LTC6811_2(i);
-    if (i < TOTAL_IC / 2) {
-      ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_ONE);
-    } else {
-      ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_TWO);
+    switch(i) {
+      case 1:
+      case 2:
+      case 5:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_ONE);
+        break;
+
+      case 0:
+      case 3:
+      case 4:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_TWO);
+        break;
     }
   }
   bms_status.set_state(BMS_STATE_DISCHARGING);
