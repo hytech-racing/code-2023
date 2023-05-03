@@ -19,8 +19,8 @@
 #define TOTAL_IC 12                 // Number of LTC6811-2 ICs that are used in the accumulator
 #define EVEN_IC_CELLS 12           // Number of cells monitored by ICs with even addresses
 #define ODD_IC_CELLS 9             // Number of cells monitored by ICS with odd addresses
-#define CHIP_SELECT_GROUP_ONE 10   // Chip select for first LTC6820 corresponding to first group of cells 
-#define CHIP_SELECT_GROUP_TWO 9  // Chip select for second LTC6820 corresponding to second group of cells 
+#define CHIP_SELECT_GROUP_ONE 9   // Chip select for first LTC6820 corresponding to first group of cells 
+#define CHIP_SELECT_GROUP_TWO 10  // Chip select for second LTC6820 corresponding to second group of cells 
 #define THERMISTORS_PER_IC 4       // Number of cell temperature monitoring thermistors connected to each IC
 #define MAX_SUCCESSIVE_FAULTS 20   // Number of successive faults permitted before AMS fault is broadcast over CAN
 #define MIN_VOLTAGE 30000          // Minimum allowable single cell voltage in units of 100μV
@@ -123,6 +123,9 @@ void setup() {
   //chip select defines
   pinMode(CHIP_SELECT_GROUP_ONE, OUTPUT); 
   pinMode(CHIP_SELECT_GROUP_TWO, OUTPUT); 
+  digitalWrite(CHIP_SELECT_GROUP_ONE, HIGH);
+  digitalWrite(CHIP_SELECT_GROUP_TWO, HIGH);
+  
   pulse_timer.begin(ams_ok_pulse, 50000); //timer to pulse pin 5 every 50 milliseconds
   Serial.begin(115200);
   SPI.begin();
@@ -142,16 +145,22 @@ void setup() {
   for (int i = 0; i < TOTAL_IC; i++) {
     ic[i] = LTC6811_2(i);
     switch(i) {
-      case 1:
       case 2:
+      case 3:
+      case 4:
       case 5:
-        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_ONE);
+      case 10:
+      case 11:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_TWO);
         break;
 
       case 0:
-      case 3:
-      case 4:
-        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_TWO);
+      case 1:
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+        ic[i].spi_set_chip_select(CHIP_SELECT_GROUP_ONE);
         break;
     }
   }
