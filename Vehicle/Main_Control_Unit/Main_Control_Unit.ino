@@ -136,8 +136,8 @@ elapsedMillis time_since_launch;
 const uint16_t LAUNCH_READY_ACCEL_THRESHOLD = 100;
 const uint16_t LAUNCH_READY_BRAKE_THRESHOLD = 300;
 const int16_t LAUNCH_READY_SPEED_THRESHOLD = 500;
-const uint16_t LAUNCH_GO_THRESHOLD = 1800;
-const uint16_t LAUNCH_STOP_THRESHOLD = 1000;
+const uint16_t LAUNCH_GO_THRESHOLD = 900;
+const uint16_t LAUNCH_STOP_THRESHOLD = 600;
 float launch_rate_target = 0.0;
 
 void setup() {
@@ -682,6 +682,10 @@ void set_state(MCU_STATE new_state) {
   }
 }
 
+inline float float_map(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 inline void set_inverter_torques() {
 
@@ -740,6 +744,10 @@ inline void set_inverter_torques() {
   float rear_lr_slip_clamped;
   float lsd_right_split; // Fraction of rear axle torque going to rear right wheel
   float lsd_slip_factor = 0.5;
+
+  float avg_speed;
+  int16_t start_derating_rpm = 2000;
+  int16_t end_derating_rpm = 20000;
 
   int16_t max_speed;
 
@@ -841,6 +849,36 @@ inline void set_inverter_torques() {
       }
       break;
     case 3:
+      // Copy pasted from mode 2 with additional derating for endurance
+      for (int i = 0; i < 4; i++) {
+        speed_setpoint_array[i] = MAX_ALLOWED_SPEED;
+      }
+      launch_state = launch_not_ready;
+      // Original load cell torque vectoring
+      load_cell_alpha = 0.95;
+      total_torque = 4 * (avg_accel - avg_brake) ;
+      total_load_cells = mcu_load_cells.get_FL_load_cell() + mcu_load_cells.get_FR_load_cell() + mcu_load_cells.get_RL_load_cell() + mcu_load_cells.get_RR_load_cell();
+      
+      // Derating
+      avg_speed = 0.0;
+      for (int i = 0; i < 4; i++)
+        avg_speed += ((float) mc_status[i].get_speed()) / 4.0;
+      float derating_factor = float_map(avg_speed, start_derating_rpm, end_derating_rpm, 1, 0);
+      derating_factor = min(1.0, max(0.0, derating_factor));
+
+      if (avg_accel >= avg_brake) {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque * derating_factor);
+      } else {
+        torque_setpoint_array[0] = (int16_t)((float)mcu_load_cells.get_FL_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[1] = (int16_t)((float)mcu_load_cells.get_FR_load_cell() / (float)total_load_cells * (float)total_torque);
+        torque_setpoint_array[2] = (int16_t)((float)mcu_load_cells.get_RL_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+        torque_setpoint_array[3] = (int16_t)((float)mcu_load_cells.get_RR_load_cell() / (float)total_load_cells * (float)total_torque / 2.0);
+      }
+      break;
+    case 4:
       max_speed = 0;
       launch_rate_target = 9.7;
       for (int i = 0; i < 4; i++) {
@@ -897,23 +935,82 @@ inline void set_inverter_torques() {
             torque_setpoint_array[i] = 2142;
             speed_setpoint_array[i] = launch_speed_target;
           }
-
           break;
         default:
           break;
       }
 
       break;
-    case 4:
-      for (int i = 0; i < 4; i++) {
-        speed_setpoint_array[i] = 0;
-      }
-      launch_state = launch_not_ready;
+
     case 5:
+      max_speed = 0;
+      launch_rate_target = 10.67;  // 1.1g
       for (int i = 0; i < 4; i++) {
-        speed_setpoint_array[i] = 0;
+        max_speed = max(max_speed, mc_status[i].get_speed());
       }
-      launch_state = launch_not_ready;
+
+      switch (launch_state) {
+        case launch_not_ready:
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = (int16_t)(-1 * avg_brake);
+            speed_setpoint_array[i] = 0;
+          }
+          time_since_launch = 0;
+          launch_speed_target = 0;
+
+          // To enter launch_ready, the following conditions must be true:
+          // 1. Pedals are not pressed
+          // 2. Speed is zero
+          if (avg_accel < LAUNCH_READY_ACCEL_THRESHOLD && avg_brake < LAUNCH_READY_BRAKE_THRESHOLD && max_speed < LAUNCH_READY_SPEED_THRESHOLD) {
+            launch_state = launch_ready;
+          }
+          break;
+        case launch_ready:
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = 0;
+            speed_setpoint_array[i] = 0;
+          }
+          time_since_launch = 0;
+          launch_speed_target = 0;
+
+          // Revert to launch_not_ready if brake is pressed or speed is too high
+          if (avg_brake >= LAUNCH_READY_BRAKE_THRESHOLD || max_speed >= LAUNCH_READY_SPEED_THRESHOLD) {
+            launch_state = launch_not_ready;
+          } else {
+            // Otherwise, check if launch should begin
+            if (avg_accel >= LAUNCH_GO_THRESHOLD) {
+              launch_state = launching;
+            }
+          }
+
+          break;
+        case launching:
+          // Exit launch if accel pedal goes past STOP threshold or brake pedal is pressed
+          if (avg_accel <= LAUNCH_STOP_THRESHOLD || avg_brake >= LAUNCH_READY_BRAKE_THRESHOLD) {
+            launch_state = launch_not_ready;
+            break;
+          }
+
+          launch_speed_target = (int16_t)((float) time_since_launch / 1000.0 * launch_rate_target * 60.0 / 1.2767432544 * 11.86);
+          launch_speed_target += 1500;
+          launch_speed_target = min(20000, max(0, launch_speed_target));
+
+          for (int i = 0; i < 4; i++) {
+            torque_setpoint_array[i] = 2142;
+            speed_setpoint_array[i] = launch_speed_target;
+          }
+          break;
+        default:
+          break;
+      }
+
+      break;
+
+//    case 5:
+//      for (int i = 0; i < 4; i++) {
+//        speed_setpoint_array[i] = 0;
+//      }
+//      launch_state = launch_not_ready;
     default:
       for (int i = 0; i < 4; i++) {
         speed_setpoint_array[i] = 0;
