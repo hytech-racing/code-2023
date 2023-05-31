@@ -284,6 +284,8 @@ void loop() {
     Serial.println(imu_gyroscope.get_yaw());
     Serial.println("dial");
     Serial.println(dashboard_status.get_dial_state());
+    Serial.println("Anolog Steering 2: ");
+    Serial.println(mcu_analog_readings.get_steering_2());
   }
 
 }
@@ -1127,6 +1129,12 @@ inline void read_all_adcs() {
     mcu_pedal_readings.set_brake_pedal_1(adc1_inputs[ADC_BRAKE_1_CHANNEL]);
     mcu_pedal_readings.set_brake_pedal_2(adc1_inputs[ADC_BRAKE_2_CHANNEL]);
     mcu_analog_readings.set_steering_2(adc1_inputs[ADC_STEERING_2_CHANNEL]);
+
+    if (timer_debug.check()) {
+      Serial.println("ADC Steerig 2: ");
+      Serial.println(adc1_inputs[ADC_STEERING_2_CHANNEL]);
+    }
+    
     current_read = adc1_inputs[ADC_CURRENT_CHANNEL] - adc1_inputs[ADC_REFERENCE_CHANNEL];
     float current = ((((current_read / 819.0) / .1912) / 4.832) * 1000) / 6.67;
     if (current > 300) {
