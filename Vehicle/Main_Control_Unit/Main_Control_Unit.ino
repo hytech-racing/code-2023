@@ -882,7 +882,11 @@ inline void set_inverter_torques() {
       break;
     case 4:
       max_speed = 0;
+<<<<<<< Updated upstream
       launch_rate_target = 10.67;
+=======
+      launch_rate_target = 11.46;  // 1g: 9.7, 1.1g: 10.67, 1.2g: 11.64, 1.4g: 13.58
+>>>>>>> Stashed changes
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }

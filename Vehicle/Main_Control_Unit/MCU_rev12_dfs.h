@@ -109,7 +109,10 @@
 #define LOAD_CELL3_SLOPE 0.181
 #define LOAD_CELL4_OFFSET -83.9
 #define LOAD_CELL4_SLOPE 0.226
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 //
 // #define LOAD_CELL1_OFFSET 0
 // #define LOAD_CELL1_SLOPE 1
