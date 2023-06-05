@@ -89,7 +89,7 @@
 
 
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
-#define ADC_SPI_SPEED 2000000            // 1000000 modified
+#define ADC_SPI_SPEED 2000000            // 1000000 modified         
 #define TORQUE_ADJUSTMENT_VOLTAGE 3.5242 
 
 
@@ -101,6 +101,7 @@
 //#define LOAD_CELL3_SLOPE 0.192
 //#define LOAD_CELL4_OFFSET -64.5
 //#define LOAD_CELL4_SLOPE 0.1954
+// Calibrated load cells
 #define LOAD_CELL1_OFFSET -20.1
 #define LOAD_CELL1_SLOPE 0.163
 #define LOAD_CELL2_OFFSET -31.5
@@ -109,10 +110,6 @@
 #define LOAD_CELL3_SLOPE 0.181
 #define LOAD_CELL4_OFFSET -83.9
 #define LOAD_CELL4_SLOPE 0.226
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 //
 // #define LOAD_CELL1_OFFSET 0
 // #define LOAD_CELL1_SLOPE 1
