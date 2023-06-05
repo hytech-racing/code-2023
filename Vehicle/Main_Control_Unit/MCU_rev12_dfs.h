@@ -89,7 +89,7 @@
 
 
 #define ALPHA 0.9772                     // parameter for the sowftware filter used on ADC pedal channels
-#define ADC_SPI_SPEED 1000000            
+#define ADC_SPI_SPEED 2000000            // 1000000 modified
 #define TORQUE_ADJUSTMENT_VOLTAGE 3.5242 
 
 

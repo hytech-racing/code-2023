@@ -883,9 +883,13 @@ inline void set_inverter_torques() {
     case 4:
       max_speed = 0;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       launch_rate_target = 10.67;
 =======
       launch_rate_target = 11.46;  // 1g: 9.7, 1.1g: 10.67, 1.2g: 11.64, 1.4g: 13.58
+>>>>>>> Stashed changes
+=======
+      launch_rate_target = 11.64; // 1.2g
 >>>>>>> Stashed changes
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
@@ -1087,6 +1091,60 @@ inline void set_inverter_torques() {
       max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
   
     }
+<<<<<<< Updated upstream
+=======
+
+    pw_lim_factor = float_map(mech_power, 20000.0, 30000.0, 1.0, 0);
+    pw_lim_factor = max(min(1.0, pw_lim_factor), 0.0);
+
+    voltage_lim_factor = float_map(filtered_min_cell_voltage, 4.0, 3.8, 1.0, 0.2);
+    voltage_lim_factor = max(min(1.0, voltage_lim_factor), 0.2);
+
+    temp_lim_factor = float_map(filtered_max_cell_temp, 30.0, 32.0, 1.0, 0.2);
+    temp_lim_factor = max(min(1.0, temp_lim_factor), 0.2);
+
+    accu_lim_factor = min(temp_lim_factor, voltage_lim_factor);
+    //mech_power /= 1000.0;
+
+    //      float current = (ADC1.read_channel(ADC_CURRENT_CHANNEL) - ADC1.read_channel(ADC_REFERENCE_CHANNEL));
+    //      current = ((((current / 819.0) / .1912) / 4.832) - 2.5) * 1000) / 6.67;
+
+    //
+    //      float dc_power = (mc_energy[0].get_dc_bus_voltage() * current) / 1000; //mc dc bus voltage
+
+    //sum up kilowatts to align
+    //if mech_power is at 63 kW, it's requesting 80 kW from the motor
+    //2 kW safety factor for the more accurate motor readings.
+    //as our effiecency increases say 68 kW would be drawing 80kW from the motor
+    //as our efficiency decreases say 60 kW would be drawing 80kW from the motor
+    //so if efficency is at 60kW and we want 63, we'd be drawing more from the battery triggering a safety problem
+    //so if efficency is at 68 kW, 63 would be drawing less power, which is fine but wasted power.
+    //if HV DC bus is over 80 kW, it's a violation!
+    // 1 kW as a second safety factor.
+    //if (mech_power > MECH_POWER_LIMIT) {
+      // mdiff = MECH_POWER_LIMIT / mech_power;
+      // diff = MECH_POWER_LIMIT / mech_power;
+    //}
+    //      if (dc_power > DC_POWER_LIMIT) {
+    //        ediff = DC_POWER_LIMIT / dc_power;
+    //      }
+    //      if (mech_power > MECH_POWER_LIMIT && dc_power > DC_POWER_LIMIT) {
+    //        diff = (ediff <= mdiff) ? ediff : mdiff;
+    //      }
+    torque_setpoint_array[0] = (uint16_t) (torque_setpoint_array[0] * pw_lim_factor * accu_lim_factor);
+    torque_setpoint_array[1] = (uint16_t) (torque_setpoint_array[1] * pw_lim_factor * accu_lim_factor);
+    torque_setpoint_array[2] = (uint16_t) (torque_setpoint_array[2] * pw_lim_factor * accu_lim_factor);
+    torque_setpoint_array[3] = (uint16_t) (torque_setpoint_array[3] * pw_lim_factor * accu_lim_factor);
+  }
+
+
+  int16_t max_speed_regen = 0;
+  for (int i = 0; i < sizeof(torque_setpoint_array); i++) {
+
+    max_speed_regen = (max_speed_regen < mc_status[i].get_speed()) ? mc_status[i].get_speed() : max_speed_regen;
+
+  }
+>>>>>>> Stashed changes
 
   for (int i = 0; i < 4; i++) {
     torque_setpoint_array[i] = max(-2140, min(2140, torque_setpoint_array[i]));
