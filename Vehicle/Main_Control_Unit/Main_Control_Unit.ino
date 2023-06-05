@@ -924,7 +924,7 @@ inline void set_inverter_torques() {
       break;
     case 3:
       max_speed = 0;
-      launch_rate_target = 9.7;
+      launch_rate_target = 11.64;
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
