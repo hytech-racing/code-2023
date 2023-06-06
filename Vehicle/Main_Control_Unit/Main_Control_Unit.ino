@@ -78,6 +78,7 @@ Metro timer_CAN_mcu_status_send = Metro(100);
 Metro timer_CAN_mcu_pedal_readings_send = Metro(50);
 Metro timer_CAN_mcu_analog_readings_send = Metro(50);
 Metro timer_CAN_mcu_load_cells_send = Metro(20);
+Metro timer_CAN_mcu_potentiometers_send = Metro(20);
 
 Metro timer_ready_sound = Metro(2000); // Time to play RTD sound
 
@@ -348,7 +349,7 @@ inline void send_CAN_mcu_load_cells() {
 }
 
 inline void send_CAN_mcu_potentiometers() {
-  if (timer_CAN_mcu_load_cells_send.check()) {
+  if (timer_CAN_mcu_potentiometers_send.check()) {
     mcu_front_potentiometers.write(msg.buf);
     msg.id = ID_MCU_FRONT_POTS;
     msg.len = sizeof(mcu_front_potentiometers);
@@ -698,7 +699,7 @@ inline float float_map(float x, float in_min, float in_max, float out_min, float
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
-
+  
 inline void set_inverter_torques_regen_only() {
   int brake1 = map(round(mcu_pedal_readings.get_brake_pedal_1()), START_BRAKE_PEDAL_1, END_BRAKE_PEDAL_1, 0, 2140);
   int brake2 = map(round(mcu_pedal_readings.get_brake_pedal_2()), START_BRAKE_PEDAL_2, END_BRAKE_PEDAL_2, 0, 2140);
@@ -924,7 +925,7 @@ inline void set_inverter_torques() {
       break;
     case 3:
       max_speed = 0;
-      launch_rate_target = 11.64;
+      launch_rate_target = 11.64;  // 9.7: 1g, 11.64: 1.2g
       for (int i = 0; i < 4; i++) {
         max_speed = max(max_speed, mc_status[i].get_speed());
       }
@@ -1084,6 +1085,7 @@ inline void set_inverter_torques() {
   //since torque unit to nominal torque and power conversion are linear, the diff can be applied directly to the torque setpoint value.
   if (mc_setpoints_command[0].get_pos_torque_limit() > 0 && mc_setpoints_command[1].get_pos_torque_limit() > 0
       && mc_setpoints_command[2].get_pos_torque_limit() > 0 && mc_setpoints_command[3].get_pos_torque_limit() > 0) {
+    int16_t pos_torque_limit[4] = {0, 0, 0, 0};
     float mech_power = 0;
     float mdiff = 1;
     //float ediff = 1;
@@ -1094,28 +1096,35 @@ inline void set_inverter_torques() {
     float accu_lim_factor = 1.0;
 
     for (int i = 0; i < 4; i++) {
-      float torque_in_nm = 9.8 * ((float) mc_setpoints_command[i].get_pos_torque_limit()) / 1000.0;
+      if (torque_setpoint_array[i] >= 0) {
+        pos_torque_limit[i]= min(torque_setpoint_array[i] , 2140);
+      }
+      else {
+        pos_torque_limit[i] = 0;
+      }
+//      float torque_in_nm = 9.8 * ((float) mc_setpoints_command[i].get_pos_torque_limit()) / 1000.0;
+      float torque_in_nm = 9.8 * ((float) pos_torque_limit[i]) / 1000.0;
       float speed_in_rpm = (float) mc_status[i].get_speed();
       mech_power += 2 * 3.1415 * torque_in_nm * speed_in_rpm / 60.0;
     }
 
-//    pw_lim_factor = float_map(mech_power, 40000.0, 55000.0, 1.0, 0);
-//    pw_lim_factor = max(min(1.0, pw_lim_factor), 0.0);
-//
-//    voltage_lim_factor = float_map(filtered_min_cell_voltage, 3.5, 3.2, 1.0, 0.2);
-//    voltage_lim_factor = max(min(1.0, voltage_lim_factor), 0.2);
-//
-//    temp_lim_factor = float_map(filtered_max_cell_temp, 55.0, 58.0, 1.0, 0.2);
-//    temp_lim_factor = max(min(1.0, temp_lim_factor), 0.2);
-
-    pw_lim_factor = float_map(mech_power, 20000.0, 30000.0, 1.0, 0);
+    pw_lim_factor = float_map(mech_power, 40000.0, 55000.0, 1.0, 0);
     pw_lim_factor = max(min(1.0, pw_lim_factor), 0.0);
 
-    voltage_lim_factor = float_map(filtered_min_cell_voltage, 4.0, 3.8, 1.0, 0.2);
+    voltage_lim_factor = float_map(filtered_min_cell_voltage, 3.5, 3.2, 1.0, 0.2);
     voltage_lim_factor = max(min(1.0, voltage_lim_factor), 0.2);
 
-    temp_lim_factor = float_map(filtered_max_cell_temp, 30.0, 32.0, 1.0, 0.2);
+    temp_lim_factor = float_map(filtered_max_cell_temp, 55.0, 58.0, 1.0, 0.2);
     temp_lim_factor = max(min(1.0, temp_lim_factor), 0.2);
+
+//    pw_lim_factor = float_map(mech_power, 20000.0, 30000.0, 1.0, 0);
+//    pw_lim_factor = max(min(1.0, pw_lim_factor), 0.0);
+//
+//    voltage_lim_factor = float_map(filtered_min_cell_voltage, 4.0, 3.8, 1.0, 0.2);
+//    voltage_lim_factor = max(min(1.0, voltage_lim_factor), 0.2);
+//
+//    temp_lim_factor = float_map(filtered_max_cell_temp, 30.0, 32.0, 1.0, 0.2);
+//    temp_lim_factor = max(min(1.0, temp_lim_factor), 0.2);
 
     accu_lim_factor = min(temp_lim_factor, voltage_lim_factor);
     //mech_power /= 1000.0;
